@@ -1,7 +1,11 @@
 {
-    "cmake.configureSettings": {
-        "PICO_SDK_POST_LIST_DIRS": "/home/maidok/Development/pico-extras"
-        // "PICO_SDK_PATH": "../../pico-sdk" // <-- Set this if you've not set ${env:PICO_SDK_PATH}
-    },
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+  "cmake.configureSettings": {
+    "PICO_SDK_POST_LIST_DIRS": "/Users/maidok/Development/pico-extras",
+    "PICO_SDK_PATH": "../pico-sdk" // <-- Set this if you've not set ${env:PICO_SDK_PATH}
+  },
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "files.associations": {
+    "iostream": "cpp",
+    "functional": "cpp"
+  }
 }

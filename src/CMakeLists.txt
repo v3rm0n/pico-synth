@@ -9,7 +9,9 @@ target_compile_definitions(picosynth PRIVATE
 
 target_link_libraries(picosynth
   pico_stdlib
-  hardware_adc 
-  pico_audio_i2s)
+  hardware_adc
+  hardware_i2c 
+  pico_audio_i2s
+        encoder)
 
 pico_add_extra_outputs(picosynth)

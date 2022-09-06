@@ -6,10 +6,13 @@ set(NAME picosynth)
 
 include(pimoroni_pico_import.cmake)
 include(pico_sdk_import.cmake)
+include(pico_extras_import.cmake)
 
 enable_language(C CXX)
 
 pico_sdk_init()
+
+include(drivers/encoder/encoder)
 
 add_subdirectory(./src)
 

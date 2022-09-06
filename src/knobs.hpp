@@ -1,4 +1,3 @@
-#pragma once
 #include <stdint.h>
 
 enum Knob : uint32_t

@@ -1,4 +1,3 @@
-#include <math.h>
 #include <iostream>
 
 #include "pico/stdlib.h"
@@ -6,12 +5,12 @@
 #include "synth.hpp"
 #include "knobs.hpp"
 #include "audio.hpp"
+#include "screen.hpp"
 
 #include "hardware/gpio.h"
 #include "hardware/sync.h"
-#include "hardware/adc.h"
-#include "hardware/structs/ioqspi.h"
-#include "hardware/structs/sio.h"
+
+#include "encoder.hpp"
 
 #define PICO_AUDIO_PACK_I2S_DATA 9
 #define PICO_AUDIO_PACK_I2S_BCLK 10
@@ -23,8 +22,11 @@
 #define ADC_MUX_S3_PIN 18
 
 #define ROTARY_SWITCH_PIN 15
-#define ROTARY_SWITCH_A_PIN 14
-#define ROTARY_SWITCH_B_PIN 13
+#define ROTARY_SWITCH_A_PIN 13
+#define ROTARY_SWITCH_B_PIN 14
+
+#define SCREEN_SCL_PIN 16
+#define SCREEN_SCA_PIN 17
 
 synth::AudioChannel synth::channels[CHANNEL_COUNT];
 
@@ -79,20 +81,37 @@ void update_playback(void)
   }
 }
 
+encoder::Encoder enc(pio0, 1, {ROTARY_SWITCH_A_PIN, ROTARY_SWITCH_B_PIN}, PIN_UNUSED);
+
 int main()
 {
   stdio_init_all();
   struct audio_buffer_pool *ap = init_audio(synth::sample_rate, PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK);
 
   init_synth();
+  init_screen(SCREEN_SCL_PIN, SCREEN_SCA_PIN);
 
   gpio_init(ROTARY_SWITCH_PIN);
   gpio_set_dir(ROTARY_SWITCH_PIN, GPIO_IN);
 
   init_knobs(ADC_MUX_SIGNAL_PIN, ADC_MUX_S0_PIN, ADC_MUX_S1_PIN, ADC_MUX_S2_PIN, ADC_MUX_S3_PIN);
 
+  draw();
+
+  bool encoderinit = enc.init();
+
+  printf("Encoder initialised: %d\n", encoderinit);
+
   while (true)
   {
+      int32_t delta = enc.delta();
+      if(delta != 0) {
+          if(delta > 0)
+              scroll_left();
+          else
+              scroll_right();
+          printf("Value = %ld\n", delta);
+      }
     uint16_t result1 = read_knob(Knob::Osc1Frequency);
     synth::channels[0].frequency = result1 / 4;
     uint16_t result2 = read_knob(Knob::Osc2Frequency);

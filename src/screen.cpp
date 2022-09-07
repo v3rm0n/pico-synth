@@ -5,7 +5,7 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/i2c.h"
-#include "raspberry.h"
+#include "raspberry.hpp"
 
 #define OLED_SET_CONTRAST _u(0x81)
 #define OLED_SET_ENTIRE_ON _u(0xA4)
@@ -243,9 +243,9 @@ void draw() {
     }
 }
 
-void scroll_right() {
+void scroll(uint8_t direction) {
     // configure horizontal scrolling
-    oled_send_cmd(OLED_SET_HORIZ_RIGHT_SCROLL | 0x00);
+    oled_send_cmd(direction | 0x00);
     oled_send_cmd(0x00); // dummy byte
     oled_send_cmd(0x00); // start page 0
     oled_send_cmd(0x00); // time interval
@@ -253,20 +253,30 @@ void scroll_right() {
     oled_send_cmd(0x00); // dummy byte
     oled_send_cmd(0xFF); // dummy byte
 
-    // let's goooo!
     oled_send_cmd(OLED_SET_SCROLL | 0x01);
 }
 
-void scroll_left() {
-    // configure horizontal scrolling
-    oled_send_cmd(OLED_SET_HORIZ_LEFT_SCROLL | 0x00);
-    oled_send_cmd(0x00); // dummy byte
-    oled_send_cmd(0x00); // start page 0
-    oled_send_cmd(0x00); // time interval
-    oled_send_cmd(0x03); // end page 3
-    oled_send_cmd(0x00); // dummy byte
-    oled_send_cmd(0xFF); // dummy byte
-
-    // let's goooo!
-    oled_send_cmd(OLED_SET_SCROLL | 0x01);
+Screen::Screen(uint8_t scl_pin, uint8_t sda_pin) {
+    this->sda_pin = sda_pin;
+    this->scl_pin = scl_pin;
 }
+
+void Screen::init() const {
+    i2c_init(i2c0, 400 * 1000);
+    gpio_set_function(sda_pin, GPIO_FUNC_I2C);
+    gpio_set_function(scl_pin, GPIO_FUNC_I2C);
+    gpio_pull_up(sda_pin);
+    gpio_pull_up(scl_pin);
+
+    oled_init();
+    draw();
+}
+
+void Screen::scroll_right() {
+    scroll(OLED_SET_HORIZ_RIGHT_SCROLL);
+}
+
+void Screen::scroll_left() {
+    scroll(OLED_SET_HORIZ_LEFT_SCROLL);
+}
+

@@ -4,28 +4,12 @@
 #include "screen.hpp"
 #include "encoder.hpp"
 #include "switch.hpp"
-
-#define PICO_AUDIO_PACK_I2S_DATA 9
-#define PICO_AUDIO_PACK_I2S_BCLK 10
-
-#define ROTARY_SWITCH_B_PIN 14
-#define ROTARY_SWITCH_A_PIN 13
-#define ROTARY_SWITCH_PIN 15
-
-#define SCREEN_SCL_PIN 16
-#define SCREEN_SCA_PIN 17
-
-#define ADC_MUX_S3_PIN 18
-#define ADC_MUX_S2_PIN 19
-#define ADC_MUX_S1_PIN 20
-#define ADC_MUX_S0_PIN 21
-
-#define ADC_MUX_SIGNAL_PIN 26
+#include "pins.hpp"
 
 encoder::Encoder enc(pio0, 1, {ROTARY_SWITCH_A_PIN, ROTARY_SWITCH_B_PIN}, PIN_UNUSED);
 Knobs knobs(ADC_MUX_SIGNAL_PIN, ADC_MUX_S0_PIN, ADC_MUX_S1_PIN, ADC_MUX_S2_PIN, ADC_MUX_S3_PIN);
 Switch rotary(ROTARY_SWITCH_PIN);
-Audio audio(SAMPLE_RATE, PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK);
+Audio audio(SAMPLE_RATE, PICO_AUDIO_SCA_PIN, PICO_AUDIO_SCL_PIN);
 Screen screen(SCREEN_SCL_PIN, SCREEN_SCA_PIN);
 Synth synth;
 

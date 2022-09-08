@@ -38,18 +38,10 @@ jobs:
 
       # Check code
       - name: cppcheck
-        uses: deep5050/cppcheck-action@main
+        uses: v3rm0n/cppcheck-action@project
         with:
           path: project
           github_token: ${{ secrets.GITHUB_TOKEN}}
-
-      - name: publish report
-        uses: mikeal/publish-to-github-action@master
-        with:
-          path: project
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: 'main'
 
       # Checkout the Pimoroni Pico Libraries
       - name: Checkout Pimoroni Pico Libraries

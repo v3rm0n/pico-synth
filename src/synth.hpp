@@ -92,6 +92,6 @@ public:
 
 private:
 
-    uint16_t volume;
+    uint16_t volume = 0xffff;
     AudioChannel channels[CHANNEL_COUNT];
 };

@@ -22,7 +22,6 @@
 
 #define ADC_MUX_SIGNAL_PIN 26
 
-
 encoder::Encoder enc(pio0, 1, {ROTARY_SWITCH_A_PIN, ROTARY_SWITCH_B_PIN}, PIN_UNUSED);
 Knobs knobs(ADC_MUX_SIGNAL_PIN, ADC_MUX_S0_PIN, ADC_MUX_S1_PIN, ADC_MUX_S2_PIN, ADC_MUX_S3_PIN);
 Switch rotary(ROTARY_SWITCH_PIN);
@@ -32,12 +31,11 @@ Synth synth;
 
 void update_playback() {
     if (rotary.changed()) {
-        for (uint8_t i = 0; i < 2; i++) {
-            if (rotary.state()) {
-                synth.attack();
-            } else {
-                synth.release();
-            }
+        bool state = rotary.state();
+        if (state) {
+            synth.attack();
+        } else {
+            synth.release();
         }
     }
 }

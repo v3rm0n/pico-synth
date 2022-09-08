@@ -17,5 +17,7 @@ bool Switch::state() {
 bool Switch::changed() {
     static bool previous_state = false;
     bool current_state = state();
-    return current_state != previous_state;
+    bool changed = current_state != previous_state;
+    previous_state = current_state;
+    return changed;
 }

@@ -40,8 +40,8 @@ jobs:
       - name: cppcheck
         uses: v3rm0n/cppcheck-action@project
         with:
-          path: project
           github_token: ${{ secrets.GITHUB_TOKEN}}
+          enable: all
 
       # Checkout the Pimoroni Pico Libraries
       - name: Checkout Pimoroni Pico Libraries

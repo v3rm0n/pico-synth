@@ -5,7 +5,7 @@
 #include "switch.hpp"
 #include "pins.hpp"
 #include "display.hpp"
-#include "freeMono9pt7b.hpp"
+#include "tiny3x3a.hpp"
 
 encoder::Encoder enc(pio0, 1, {ROTARY_SWITCH_A_PIN, ROTARY_SWITCH_B_PIN}, PIN_UNUSED);
 Knobs knobs(ADC_MUX_SIGNAL_PIN, ADC_MUX_S0_PIN, ADC_MUX_S1_PIN, ADC_MUX_S2_PIN, ADC_MUX_S3_PIN);
@@ -39,8 +39,8 @@ int main() {
     enc.init();
 
     display.init();
-    display.set_font(&FreeMono9pt7b);
-    display.draw_string(0, 30, "Hello", 1);
+    display.set_font(&Tiny3x3a2pt7b);
+    display.draw_string(0, 30, "HELLO", 1);
     display.display();
 
 #pragma clang diagnostic push

@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include <cstdint>
 
 enum Knob : uint32_t {
     Osc1Frequency = 1,

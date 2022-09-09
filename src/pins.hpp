@@ -1,4 +1,4 @@
-#define PICO_AUDIO_SCA_PIN 9
+#define PICO_AUDIO_SDA_PIN 9
 #define PICO_AUDIO_SCL_PIN 10
 
 #define ROTARY_SWITCH_A_PIN 13
@@ -6,7 +6,7 @@
 #define ROTARY_SWITCH_PIN 15
 
 #define SCREEN_SCL_PIN 16
-#define SCREEN_SCA_PIN 17
+#define SCREEN_SDA_PIN 17
 
 #define ADC_MUX_S3_PIN 18
 #define ADC_MUX_S2_PIN 19

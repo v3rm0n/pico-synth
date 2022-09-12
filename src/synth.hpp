@@ -60,6 +60,8 @@ private:
 
     void (*wave_buffer_callback)(AudioChannel &channel);
 
+    int32_t get_sample();
+
     friend class Synth;
 };
 
@@ -75,8 +77,6 @@ public:
     explicit Synth();
 
     void init();
-
-    bool is_audio_playing();
 
     int16_t get_audio_frame();
 

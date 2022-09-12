@@ -21,3 +21,7 @@ bool Switch::changed() {
     previous_state = current_state;
     return changed;
 }
+
+uint8_t Switch::get_pin() {
+    return switch_pin;
+}

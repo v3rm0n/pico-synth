@@ -1,12 +1,12 @@
-# Raspberry PI Pico based digital synth
+# Raspberry PI Pico based digital synthesizer
 
-Fun personal project to combine software, hardware and 3D modelling/printing.
+Fun personal project to combine music, software, hardware and 3D modelling/printing.
 
 ## Components
 
 - Raspberry PI Pico
 - Pico Audio module
-- OLED screen
+- 128x64 OLED screen
 - 16-Channel analog multiplexer
 - 11 potentiometers
 - 3 rotary encoders

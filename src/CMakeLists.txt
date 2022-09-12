@@ -12,6 +12,7 @@ target_link_libraries(picosynth
         hardware_adc
         hardware_i2c
         pico_audio_i2s
+        pico_multicore
         encoder)
 
 pico_add_extra_outputs(picosynth)

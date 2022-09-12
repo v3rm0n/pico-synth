@@ -46,16 +46,13 @@ const int16_t sine_waveform[256] = {-32768, -32758, -32729, -32679, -32610, -325
                                     -32138, -32286, -32413, -32522, -32610, -32679, -32729, -32758};
 
 
-Synth::Synth() {
-
-};
+Synth::Synth() = default;
 
 void Synth::init() {
     uint16_t attack_ms = 0;
     uint16_t decay_ms = 1000;
     uint16_t sustain = 0xafff;
     uint16_t release_ms = 1000;
-    uint16_t volume = 10000;
 
     // OSC1
     channels[0].waveforms = Waveform::SAW;
@@ -64,7 +61,6 @@ void Synth::init() {
     channels[0].decay_ms = decay_ms;
     channels[0].sustain = sustain;
     channels[0].release_ms = release_ms;
-    // channels[0].volume      = volume;
 
     // OSC2
     channels[1].waveforms = Waveform::SAW;
@@ -73,133 +69,16 @@ void Synth::init() {
     channels[1].decay_ms = decay_ms;
     channels[1].sustain = sustain;
     channels[1].release_ms = release_ms;
-    // channels[1].volume      = volume;
-}
-
-bool Synth::is_audio_playing() {
-    if (volume == 0) {
-        return false;
-    }
-
-    bool any_channel_playing = false;
-    for (const auto &channel: channels) {
-        if (channel.volume > 0 && channel.adsr_phase != ADSRPhase::OFF) {
-            any_channel_playing = true;
-        }
-    }
-
-    return any_channel_playing;
 }
 
 int16_t Synth::get_audio_frame() {
     int32_t sample = 0;  // used to combine channel output
 
     for (auto &channel: channels) {
-
-        // increment the waveform position counter. this provides an
-        // Q16 fixed point value representing how far through
-        // the current waveform we are
-        channel.waveform_offset += ((channel.frequency * 256) << 8) / SAMPLE_RATE;
-
-        if (channel.adsr_phase == ADSRPhase::OFF) {
-            continue;
-        }
-
-        if ((channel.adsr_frame >= channel.adsr_end_frame) && (channel.adsr_phase != ADSRPhase::SUSTAIN)) {
-            switch (channel.adsr_phase) {
-                case ADSRPhase::ATTACK:
-                    channel.trigger_decay();
-                    break;
-                case ADSRPhase::DECAY:
-                    channel.trigger_sustain();
-                    break;
-                case ADSRPhase::RELEASE:
-                    channel.off();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        channel.adsr += channel.adsr_step;
-        channel.adsr_frame++;
-
-        if (channel.waveform_offset & 0x10000) {
-            // if the waveform offset overflows then generate a new
-            // random noise sample
-            channel.noise = prng_normal();
-        }
-
-        channel.waveform_offset &= 0xffff;
-
-        // check if any waveforms are active for this channel
-        if (channel.waveforms) {
-            uint8_t waveform_count = 0;
-            int32_t channel_sample = 0;
-
-            if (channel.waveforms & Waveform::NOISE) {
-                channel_sample += channel.noise;
-                waveform_count++;
-            }
-
-            if (channel.waveforms & Waveform::SAW) {
-                channel_sample += (int32_t) channel.waveform_offset - 0x7fff;
-                waveform_count++;
-            }
-
-            // creates a triangle wave of ^
-            if (channel.waveforms & Waveform::TRIANGLE) {
-                if (channel.waveform_offset < 0x7fff) { // initial quarter up slope
-                    channel_sample += int32_t(channel.waveform_offset * 2) - int32_t(0x7fff);
-                } else { // final quarter up slope
-                    channel_sample += int32_t(0x7fff) - ((int32_t(channel.waveform_offset) - int32_t(0x7fff)) * 2);
-                }
-                waveform_count++;
-            }
-
-            if (channel.waveforms & Waveform::SQUARE) {
-                channel_sample += (channel.waveform_offset < channel.pulse_width) ? 0x7fff : -0x7fff;
-                waveform_count++;
-            }
-
-            if (channel.waveforms & Waveform::SINE) {
-                // the sine_waveform sample contains 256 samples in
-                // total so we'll just use the most significant bits
-                // of the current waveform position to index into it
-                channel_sample += sine_waveform[channel.waveform_offset >> 8];
-                waveform_count++;
-            }
-
-            if (channel.waveforms & Waveform::WAVE) {
-                channel_sample += channel.wave_buffer[channel.wave_buf_pos];
-                if (++channel.wave_buf_pos == 64) {
-                    channel.wave_buf_pos = 0;
-                    if (channel.wave_buffer_callback)
-                        channel.wave_buffer_callback(channel);
-                }
-                waveform_count++;
-            }
-
-            channel_sample = channel_sample / waveform_count;
-
-            channel_sample = (int64_t(channel_sample) * int32_t(channel.adsr >> 8)) >> 16;
-
-            // apply channel volume
-            channel_sample = (int64_t(channel_sample) * int32_t(channel.volume)) >> 16;
-
-            // apply channel filter
-            //if (channel.filter_enable) {
-            //float filter_epow = 1 - expf(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(channel.filter_cutoff_frequency));
-            //channel_sample += (channel_sample - channel.filter_last_sample) * filter_epow;
-            //}
-
-            //channel.filter_last_sample = channel_sample;
-
-            // combine channel sample into the final sample
-            sample += channel_sample;
-        }
+        sample += channel.get_sample();
     }
 
+    // Apply volume
     sample = (int64_t(sample) * int32_t(volume)) >> 16;
 
     // clip result to 16-bit
@@ -268,4 +147,110 @@ void AudioChannel::off() {
     adsr_frame = 0;
     adsr_phase = ADSRPhase::OFF;
     adsr_step = 0;
+}
+
+int32_t AudioChannel::get_sample() {
+
+    // increment the waveform position counter. this provides an
+    // Q16 fixed point value representing how far through
+    // the current waveform we are
+    waveform_offset += ((frequency * 256) << 8) / SAMPLE_RATE;
+
+    if (adsr_phase == ADSRPhase::OFF) {
+        return 0;
+    }
+
+    if ((adsr_frame >= adsr_end_frame) && (adsr_phase != ADSRPhase::SUSTAIN)) {
+        switch (adsr_phase) {
+            case ADSRPhase::ATTACK:
+                trigger_decay();
+                break;
+            case ADSRPhase::DECAY:
+                trigger_sustain();
+                break;
+            case ADSRPhase::RELEASE:
+                off();
+                break;
+            default:
+                break;
+        }
+    }
+
+    adsr += adsr_step;
+    adsr_frame++;
+
+    if (waveform_offset & 0x10000) {
+        // if the waveform offset overflows then generate a new
+        // random noise sample
+        noise = prng_normal();
+    }
+
+    waveform_offset &= 0xffff;
+
+    // check if any waveforms are active for this channel
+    if (waveforms) {
+        uint8_t waveform_count = 0;
+        int32_t channel_sample = 0;
+
+        if (waveforms & Waveform::NOISE) {
+            channel_sample += noise;
+            waveform_count++;
+        }
+
+        if (waveforms & Waveform::SAW) {
+            channel_sample += (int32_t) waveform_offset - 0x7fff;
+            waveform_count++;
+        }
+
+        // creates a triangle wave of ^
+        if (waveforms & Waveform::TRIANGLE) {
+            if (waveform_offset < 0x7fff) { // initial quarter up slope
+                channel_sample += int32_t(waveform_offset * 2) - int32_t(0x7fff);
+            } else { // final quarter up slope
+                channel_sample += int32_t(0x7fff) - ((int32_t(waveform_offset) - int32_t(0x7fff)) * 2);
+            }
+            waveform_count++;
+        }
+
+        if (waveforms & Waveform::SQUARE) {
+            channel_sample += (waveform_offset < pulse_width) ? 0x7fff : -0x7fff;
+            waveform_count++;
+        }
+
+        if (waveforms & Waveform::SINE) {
+            // the sine_waveform sample contains 256 samples in
+            // total so we'll just use the most significant bits
+            // of the current waveform position to index into it
+            channel_sample += sine_waveform[waveform_offset >> 8];
+            waveform_count++;
+        }
+
+        if (waveforms & Waveform::WAVE) {
+            channel_sample += wave_buffer[wave_buf_pos];
+            if (++wave_buf_pos == 64) {
+                wave_buf_pos = 0;
+                if (wave_buffer_callback)
+                    wave_buffer_callback(*this);
+            }
+            waveform_count++;
+        }
+
+        channel_sample = channel_sample / waveform_count;
+
+        channel_sample = (int64_t(channel_sample) * int32_t(adsr >> 8)) >> 16;
+
+        // apply channel volume
+        channel_sample = (int64_t(channel_sample) * int32_t(volume)) >> 16;
+
+        // apply channel filter
+        //if (filter_enable) {
+        //float filter_epow = 1 - expf(-(1.0f / 22050.0f) * 2.0f * pi * int32_t(filter_cutoff_frequency));
+        //channel_sample += (channel_sample - filter_last_sample) * filter_epow;
+        //}
+
+        //filter_last_sample = channel_sample;
+
+        return channel_sample;
+    }
+    return 0;
 }
